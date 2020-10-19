@@ -65,28 +65,29 @@ Cavity_loss = (1 - Calculate_power(field_tmp));
 
 
 disp([' ---- Display results for cavity ' inputname(1)   ' -----'])
-fprintf(' Round trip diffraction loss: %g [ppm] \n',Cavity_loss*1E6)
+fprintf(' Round trip diffraction loss: %g ppm \n',Cavity_loss*1E6)
 
-fprintf(' Circulating power: %g [W] \n',Calculate_power(Field_total))
+power = Calculate_power(Field_total);
+fprintf(' Circulating power: %g W \n',power)
 
 % Find if the mode is a TEM00 or not
 [~, m n] = Read_mode_name(Cin.Laser_in.Mode_name);
 
 if (m==0) && (n==0)
-    [Beam_radius, ~] = Fit_TEM00(Propagate_E(Field_total,Cin.Length));
-    fprintf(' Size of the beam on the end mirror: %g [m] \n',Beam_radius)
+    [Beam_radius_out, ~] = Fit_TEM00(Propagate_E(Field_total,Cin.Length));
+    [Beam_radius_in, Beam_RofC] = Fit_TEM00(Field_total);
     
-    [Beam_radius, Beam_RofC] = Fit_TEM00(Field_total);
-    fprintf(' Size of the beam on the input mirror: %g [m] \n',Beam_radius)
+    fprintf(' Size of the beam on the input mirror: %g m \n',Beam_radius_in)
+    fprintf(' Size of the beam on the end mirror: %g m \n',Beam_radius_out)
     
     
     % Calculate the q parameter of the beam on the input mirror
-    Cavity_q = 1/(1/Beam_RofC - 1i*Cin.Laser_in.Wavelength/(pi*Beam_radius^2));
+    Cavity_q = 1/(1/Beam_RofC - 1i*Cin.Laser_in.Wavelength/(pi*Beam_radius_in^2));
     Cavity_waist_size = sqrt(( (imag(Cavity_q))*Cin.Laser_in.Wavelength/pi ));
     Arm.waist_position = real(Cavity_q);
     
-    fprintf(' Size of the cavity waist: %g [m] \n',Cavity_waist_size)
-    fprintf(' Distance of the cavity waist from the input mirror: %g [m] \n',Arm.waist_position)
+    fprintf(' Size of the cavity waist: %g m \n',Cavity_waist_size)
+    fprintf(' Distance of the cavity waist from the input mirror: %g m \n',Arm.waist_position)
 end
 
 
@@ -102,7 +103,7 @@ subplot(2,2,[3 4])
 plot(Power_buildup)
 title('Power buildup')
 xlabel('Number of iteration')
-ylabel('Power [W]')
+ylabel('Power (W)')
 
 
 switch nargout
@@ -112,8 +113,14 @@ switch nargout
     case 2
         varargout{1} = Cavity_loss;
         varargout{2} = Field_total;
+    case 5
+        varargout{1} = Cavity_loss;
+        varargout{2} = power;
+        varargout{3} = Beam_radius_in;
+        varargout{4} = Beam_radius_out;
+        varargout{5} = Cavity_waist_size;
     otherwise
-        error('Get_info(): Too many output argument')
+        error('Get_info(): Wrong number output arguments.')
 end
 
 end
