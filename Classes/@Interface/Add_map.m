@@ -73,6 +73,9 @@ p.addParameter('centering',[0 0],@(x)isnumeric(x));
 % Display or not the results of the fit in the command line
 p.addParameter('verbose',true,@(x)isa(x,'logical'));
 
+% Moving the map by an abritrary distance
+p.addParameter('shifts',[0 0],@(x)isnumeric(x));
+
 p.parse(Iin,map_loaded,varargin{:})
 
 %p.Results
@@ -198,7 +201,7 @@ if (m==n)     % The matrix is square
     edge_value = find_edge_value(map.loaded);
     %edge_value = -1.81E-8;
     % Resample the loaded map to the grid of the interface
-    map.resampled = interp2(map.Grid_X,map.Grid_Y,map.loaded,Iin.Grid.D2_X,Iin.Grid.D2_Y,'linear',edge_value);
+    map.resampled = interp2(map.Grid_X-p.Results.shifts(1),map.Grid_Y-p.Results.shifts(2),map.loaded,Iin.Grid.D2_X,Iin.Grid.D2_Y,'linear',edge_value);
     
 elseif (n==2)    % The matrix is a 2 vector column, first column radius, second column sagitta change
     map.resampled = interp1(map.loaded(:,1),map.loaded(:,2),sqrt(Iin.Grid.D2_X.^2 + Iin.Grid.D2_Y.^2),'linear',0);
